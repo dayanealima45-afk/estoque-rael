@@ -1,0 +1,9 @@
+{
+  "name": "ESTOQUE RAEL SORVETES",
+  "short_name": "Estoque Rael",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f4f8",
+  "theme_color": "#7b08c0",
+  "icons": [{ "src": "logo.jpeg", "sizes": "601x573", "type": "image/jpeg" }]
+}
