@@ -259,6 +259,8 @@ async function main() {
     assert.equal(e.status, 200); assert.equal(e.data.slice(0, 2).toString(), 'PK');
     e = await adm('GET', `/api/export/${t}?formato=pdf`);
     assert.equal(e.status, 200); assert.equal(e.data.slice(0, 4).toString(), '%PDF');
+    assert.ok(/Arial|LiberationSans/.test(e.data.toString('latin1')), 'PDF usa Arial (ou Liberation Sans, mesmas medidas)');
+    if (process.env.SALVAR_PDF) fs.writeFileSync(path.join(process.env.SALVAR_PDF, `${t}.pdf`), e.data);
   }
   const planilha = fs.readFileSync(path.join(__dirname, '..', 'data', 'planilha-inicial.xlsx'));
   const imp = await fetch(base + '/api/import', { method: 'POST', body: planilha, headers: { 'Content-Type': 'application/octet-stream', Cookie: '' } });
