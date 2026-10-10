@@ -228,6 +228,7 @@ rota('painel', async main => {
   const d = await api('/api/dashboard');
   const u = d.ultima;
   main.innerHTML = `
+    ${st.boot.aviso_armazenamento ? `<div class="card" style="border:2px solid var(--vermelho);background:var(--vermelho-claro);color:var(--vermelho);font-weight:800;margin-bottom:12px">⚠️ ${esc(st.boot.aviso_armazenamento)}</div>` : ''}
     <div class="card pergunta">
       <h2>O que eu preciso <span>comprar?</span></h2>
       <a class="atalho" href="#/compras?ver=urgente"><span class="n">${d.urgentes}</span>🔴 compra${d.urgentes === 1 ? '' : 's'} urgente${d.urgentes === 1 ? '' : 's'}<span class="seta">${ic('right')}</span></a>

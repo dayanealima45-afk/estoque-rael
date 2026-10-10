@@ -89,10 +89,21 @@ app.put('/api/me/senha', auth, (req, res) => {
 
 app.use('/api', auth);
 
+// Avisa quando, no Railway, o banco não está num volume: cada atualização apagaria tudo
+function avisoArmazenamento() {
+  if (!process.env.RAILWAY_PROJECT_ID && !process.env.RAILWAY_ENVIRONMENT_NAME) return null;
+  const vol = process.env.RAILWAY_VOLUME_MOUNT_PATH;
+  if (!vol) return 'Os dados NÃO estão sendo guardados: o serviço no Railway está sem volume. Toda atualização do sistema apaga contagens, funcionárias e alterações. Adicione um volume com caminho /data.';
+  const rel = path.relative(path.resolve(vol), path.resolve(DATA_DIR));
+  if (rel.startsWith('..') || path.isAbsolute(rel)) return `Os dados NÃO estão sendo guardados: o volume está em ${vol}, mas o banco está em ${DATA_DIR}. Mude o caminho do volume para /data.`;
+  return null;
+}
+if (avisoArmazenamento()) console.warn('ATENÇÃO:', avisoArmazenamento());
+
 // ---------------- Dados gerais ----------------
 app.get('/api/bootstrap', (req, res) => {
   const unidades = db.prepare('SELECT DISTINCT unidade FROM products ORDER BY unidade').all().map(r => r.unidade);
-  res.json({ user: req.user, categorias: getCategories(), settings: getSettings(), unidades, niveis: R.NIVEIS, regras: R.REGRAS, hoje: R.today() });
+  res.json({ user: req.user, aviso_armazenamento: req.user.perfil === 'admin' ? avisoArmazenamento() : null, categorias: getCategories(), settings: getSettings(), unidades, niveis: R.NIVEIS, regras: R.REGRAS, hoje: R.today() });
 });
 
 // ---------------- Produtos ----------------
