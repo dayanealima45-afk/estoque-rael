@@ -159,6 +159,18 @@ app.put('/api/products/:id', admin, (req, res) => {
   res.json(S.enriquecerProduto(db.prepare('SELECT * FROM products WHERE id = ?').get(atual.id)));
 });
 
+// Limpa a data de validade de todos os produtos (o histórico das contagens antigas fica como estava)
+app.post('/api/products/limpar-validades', admin, (req, res) => {
+  if (req.body.confirmar !== 'LIMPAR') throw new S.HttpError(400, 'Confirmação inválida');
+  const comValidade = db.prepare('SELECT id, validade FROM products WHERE validade IS NOT NULL').all();
+  tx(() => {
+    for (const p of comValidade) S.historico(p.id, 'validade_limpa', S.fmtData(p.validade), null, req.user.nome, 'Validade apagada (limpeza geral)');
+    db.prepare("UPDATE products SET validade = NULL, updated_at = datetime('now','localtime') WHERE validade IS NOT NULL").run();
+    S.auditoria(req.user.nome, 'limpar_validades', { produtos: comValidade.length });
+  });
+  res.json({ limpos: comValidade.length });
+});
+
 app.delete('/api/products/:id', admin, (req, res) => {
   const atual = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!atual) throw new S.HttpError(404, 'Produto não encontrado');

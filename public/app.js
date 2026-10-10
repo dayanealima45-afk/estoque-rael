@@ -1068,6 +1068,12 @@ rota('config', async main => {
       </div>
       <button class="btn grande" type="submit" style="margin-top:12px">${ic('check')} SALVAR CONFIGURAÇÕES</button>
     </form>
+    <div class="secao-titulo">Validades</div>
+    <div class="card">
+      <p style="margin-top:0">Hoje <b>${prods.filter(p => p.validade).length}</b> produto(s) têm data de validade cadastrada.</p>
+      <p class="small muted">Apaga a data de validade de <b>todos</b> os produtos. As funcionárias podem informar novas datas na próxima contagem. As contagens antigas no histórico não mudam.</p>
+      <button class="btn perigo" id="limpar-validades" ${prods.some(p => p.validade) ? '' : 'disabled'}>Limpar validade de todos os produtos</button>
+    </div>
     <div class="secao-titulo">Produtos com regra especial (${especiais.length})</div>
     <div class="card" style="padding-top:4px;padding-bottom:4px">
       ${especiais.map(p => `<a class="lista-item" href="#/produto/${p.id}"><div class="corpo"><div class="titulo">${esc(p.nome)}</div>
@@ -1075,6 +1081,18 @@ rota('config', async main => {
     </div>
     <p class="small muted">Para dar uma regra especial a outro produto, abra o produto em <a href="#/produtos">Produtos</a> e mude a "Regra de reposição" ou o "Estoque mínimo".
     Os prazos após aberto também são editados no cadastro de cada produto (veja todos em <a href="#/vencimentos?aba=aberto">Vencimentos › Após aberto</a>).</p>`;
+  $('#limpar-validades').onclick = async () => {
+    const n = prods.filter(p => p.validade).length;
+    const ok = await confirmar('Limpar todas as validades?',
+      `<p>Isso apaga a data de validade de <b>${n} produto(s)</b>. Não dá para desfazer.</p>`, 'Sim, limpar validades', 'perigo');
+    if (!ok) return;
+    try {
+      const r = await api('/api/products/limpar-validades', { method: 'POST', body: { confirmar: 'LIMPAR' } });
+      st.produtos = null;
+      toast(`Validade apagada de ${r.limpos} produto(s) ✓`, 'ok');
+      navegar();
+    } catch (err) { toast(err.message, 'erro'); }
+  };
   $('#f-cfg').onsubmit = async e => {
     e.preventDefault();
     const f = e.target;

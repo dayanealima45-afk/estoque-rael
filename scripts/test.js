@@ -253,6 +253,19 @@ async function main() {
   await adm('DELETE', `/api/counts/${c3}`);
   passo('Regras configuráveis: mínimo por categoria e regra de balde por produto mudam sem mexer no código');
 
+  // Limpar validades
+  r = await vit('POST', '/api/products/limpar-validades', { confirmar: 'LIMPAR' });
+  assert.equal(r.status, 403, 'funcionária não limpa validades');
+  r = await adm('POST', '/api/products/limpar-validades', {});
+  assert.equal(r.status, 400, 'exige confirmação');
+  r = await adm('POST', '/api/products/limpar-validades', { confirmar: 'LIMPAR' });
+  assert.ok(r.data.limpos > 0);
+  prods = (await adm('GET', '/api/products?todos=1')).data;
+  assert.ok(prods.every(p => !p.validade), 'nenhum produto com validade');
+  r = await adm('GET', `/api/counts/${c1}`);
+  assert.equal(r.data.itens[P('CEREJA').id].validade, R.addDays(hoje, -2), 'histórico da contagem preservado');
+  passo('Limpar validade de todos os produtos (só administradora, histórico das contagens mantido)');
+
   // Exportação e importação
   for (const t of ['estoque', 'historico', 'compras', 'vencimentos', 'completo']) {
     let e = await adm('GET', `/api/export/${t}?formato=xlsx`);
